@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>UniPDF – Unir archivos PDF</title>
+  <meta name="description" content="Une múltiples archivos PDF en uno solo de forma rápida y gratuita, sin subir tus archivos a ningún servidor." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <!-- pdf-lib v1.17.1 from jsDelivr with SRI hash -->
+  <!-- TODO(security): Pin to exact patch version and update SRI hash when upgrading. -->
+  <script
+    src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"
+    integrity="sha256-D5pcrQeUHwgmWGyU4InYm5GMRuXBfPLVo8b2ZuO8aU8="
+    crossorigin="anonymous"
+  ></script>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ===== HEADER ===== -->
+  <header class="header">
+    <div class="logo">
+      <svg class="logo-icon" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <rect width="36" height="36" rx="10" fill="url(#grad)"/>
+        <defs>
+          <linearGradient id="grad" x1="0" y1="0" x2="36" y2="36" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#6366f1"/>
+            <stop offset="100%" stop-color="#8b5cf6"/>
+          </linearGradient>
+        </defs>
+        <path d="M10 9h10l6 6v12a2 2 0 0 1-2 2H10a2 2 0 0 1-2-2V11a2 2 0 0 1 2-2z" stroke="white" stroke-width="1.8" stroke-linejoin="round" fill="none"/>
+        <path d="M20 9v7h6" stroke="white" stroke-width="1.8" stroke-linejoin="round" fill="none"/>
+        <path d="M14 20h8M14 24h5" stroke="white" stroke-width="1.8" stroke-linecap="round"/>
+      </svg>
+      <span class="logo-text">UniPDF</span>
+    </div>
+    <p class="header-sub">Une tus PDFs sin salir del navegador</p>
+  </header>
+
+  <!-- ===== MAIN ===== -->
+  <main class="main">
+
+    <!-- DROP ZONE -->
+    <section class="dropzone-wrapper" id="dropzoneSection" aria-label="Zona de carga de archivos PDF">
+      <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-describedby="dropzoneHint">
+        <div class="dropzone-icon" aria-hidden="true">
+          <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M32 44V20M32 20l-8 8M32 20l8 8" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M16 48h32" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <p class="dropzone-title">Arrastra tus PDFs aquí</p>
+        <p class="dropzone-sub" id="dropzoneHint">o haz clic para seleccionar archivos</p>
+        <button class="btn btn-outline" id="browseBtn" type="button">Seleccionar PDFs</button>
+        <input type="file" id="fileInput" accept=".pdf,application/pdf" multiple aria-label="Seleccionar archivos PDF" hidden />
+      </div>
+    </section>
+
+    <!-- FILE LIST -->
+    <section class="filelist-section" id="filelistSection" aria-label="Lista de archivos PDF cargados" hidden>
+      <div class="filelist-header">
+        <h2 class="filelist-title">Archivos <span class="badge" id="fileCount">0</span></h2>
+        <div class="filelist-actions">
+          <button class="btn btn-ghost" id="addMoreBtn" type="button">+ Añadir más</button>
+          <button class="btn btn-ghost btn-danger" id="clearAllBtn" type="button">Eliminar todo</button>
+        </div>
+      </div>
+      <p class="filelist-hint">Arrastra para reordenar · El orden de la lista es el orden de unión</p>
+      <ul class="filelist" id="fileList" role="list" aria-label="Archivos PDF para unir"></ul>
+
+      <!-- MERGE BUTTON -->
+      <div class="merge-bar">
+        <button class="btn btn-primary btn-large" id="mergeBtn" type="button">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3m10 0h3a2 2 0 0 0 2-2v-3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Unir PDFs
+        </button>
+      </div>
+    </section>
+
+    <!-- PROGRESS -->
+    <div class="progress-wrapper" id="progressWrapper" hidden aria-live="polite">
+      <div class="progress-bar-track">
+        <div class="progress-bar-fill" id="progressBar"></div>
+      </div>
+      <p class="progress-text" id="progressText">Procesando…</p>
+    </div>
+
+    <!-- SUCCESS -->
+    <div class="success-card" id="successCard" hidden aria-live="polite">
+      <div class="success-icon" aria-hidden="true">
+        <svg viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="28" cy="28" r="28" fill="url(#sg)"/>
+          <defs>
+            <linearGradient id="sg" x1="0" y1="0" x2="56" y2="56" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stop-color="#22c55e"/>
+              <stop offset="100%" stop-color="#16a34a"/>
+            </linearGradient>
+          </defs>
+          <path d="M18 28l8 8 12-12" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <h2 class="success-title">¡PDF unido con éxito!</h2>
+      <p class="success-sub" id="successInfo"></p>
+      <div class="success-actions">
+        <button class="btn btn-primary" id="downloadBtn" type="button">⬇ Descargar PDF</button>
+        <button class="btn btn-ghost" id="newMergeBtn" type="button">Unir otros archivos</button>
+      </div>
+    </div>
+
+    <!-- ERROR -->
+    <div class="error-card" id="errorCard" hidden role="alert" aria-live="assertive">
+      <span class="error-icon" aria-hidden="true">⚠️</span>
+      <p class="error-msg" id="errorMsg">Ha ocurrido un error.</p>
+      <button class="btn btn-ghost" id="errorRetryBtn" type="button">Reintentar</button>
+    </div>
+
+  </main>
+
+  <!-- ===== FOOTER ===== -->
+  <footer class="footer">
+    <p>🔒 Todos los archivos se procesan <strong>localmente en tu navegador</strong>. Nunca se suben a ningún servidor.</p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
