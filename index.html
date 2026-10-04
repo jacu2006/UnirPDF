@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>UniPDF – Unir archivos PDF</title>
-  <meta name="description" content="Une múltiples archivos PDF en uno solo de forma rápida y gratuita, sin subir tus archivos a ningún servidor." />
+  <title>UniPDF – Herramientas PDF</title>
+  <meta name="description" content="Une PDFs y convierte Markdown a PDF de forma rápida y gratuita, sin subir tus archivos a ningún servidor." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -15,6 +15,13 @@
     integrity="sha256-D5pcrQeUHwgmWGyU4InYm5GMRuXBfPLVo8b2ZuO8aU8="
     crossorigin="anonymous"
   ></script>
+  <!-- marked.js v9 for Markdown parsing -->
+  <script src="https://cdn.jsdelivr.net/npm/marked@9.1.6/marked.min.js" crossorigin="anonymous"></script>
+  <!-- html2canvas + jsPDF for client-side PDF generation -->
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js" crossorigin="anonymous"></script>
+  <!-- pdfjs-dist v3 for rendering PDF page thumbnails -->
+  <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js" crossorigin="anonymous"></script>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -36,11 +43,41 @@
       </svg>
       <span class="logo-text">UniPDF</span>
     </div>
-    <p class="header-sub">Une tus PDFs sin salir del navegador</p>
+    <p class="header-sub">Herramientas PDF sin salir del navegador</p>
   </header>
+
+  <!-- ===== TABS ===== -->
+  <nav class="tabs-nav" role="tablist" aria-label="Herramientas disponibles">
+    <button class="tab-btn tab-active" id="tabMerge" role="tab" aria-selected="true" aria-controls="panelMerge" type="button">
+      <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4 5h5M4 10h5M4 15h5M11 5h5M11 10h5M11 15h5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+      Unir PDFs
+    </button>
+    <button class="tab-btn" id="tabEdit" role="tab" aria-selected="false" aria-controls="panelEdit" type="button">
+      <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+        <path d="M4 3h12a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z" stroke="currentColor" stroke-width="1.6"/>
+        <path d="M7 7h6M7 10h6M7 13h3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+      </svg>
+      Editar PDF
+    </button>
+    <button class="tab-btn" id="tabImg" role="tab" aria-selected="false" aria-controls="panelImg" type="button">
+      <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+        <path d="M4 3h12a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z" stroke="currentColor" stroke-width="1.6"/>
+        <circle cx="7.5" cy="7.5" r="1.5" fill="currentColor"/>
+        <path d="M16 14l-4-4-5 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      Imágenes → PDF
+    </button>
+    <button class="tab-btn" id="tabMd" role="tab" aria-selected="false" aria-controls="panelMd" type="button">
+      <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M3 4h14M3 8h9M3 12h11M3 16h7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+      MD → PDF
+    </button>
+  </nav>
 
   <!-- ===== MAIN ===== -->
   <main class="main">
+
+    <!-- ══════════ PANEL: UNIR PDFs ══════════ -->
+    <div id="panelMerge" role="tabpanel" aria-labelledby="tabMerge">
 
     <!-- DROP ZONE -->
     <section class="dropzone-wrapper" id="dropzoneSection" aria-label="Zona de carga de archivos PDF">
@@ -117,6 +154,286 @@
       <p class="error-msg" id="errorMsg">Ha ocurrido un error.</p>
       <button class="btn btn-ghost" id="errorRetryBtn" type="button">Reintentar</button>
     </div>
+
+    </div><!-- /panelMerge -->
+
+    <!-- ══════════ PANEL: EDITAR PDF ══════════ -->
+    <div id="panelEdit" role="tabpanel" aria-labelledby="tabEdit" hidden>
+
+      <!-- EDIT DROP ZONE -->
+      <section class="dropzone-wrapper" id="editDropzoneSection" aria-label="Zona de carga de archivo PDF a editar">
+        <div class="dropzone" id="editDropzone" tabindex="0" role="button" aria-describedby="editDropzoneHint">
+          <div class="dropzone-icon" aria-hidden="true">
+            <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M32 44V20M32 20l-8 8M32 20l8 8" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M16 48h32" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <p class="dropzone-title">Arrastra el PDF que deseas editar</p>
+          <p class="dropzone-sub" id="editDropzoneHint">Reordena páginas, elimina las que no necesites y descarga tu nuevo PDF</p>
+          <button class="btn btn-outline" id="editBrowseBtn" type="button">Seleccionar PDF</button>
+          <input type="file" id="editFileInput" accept=".pdf,application/pdf" aria-label="Seleccionar archivo PDF para editar" hidden />
+        </div>
+      </section>
+
+      <!-- EDIT WORKSPACE -->
+      <section class="edit-section" id="editSection" hidden aria-label="Editor de páginas PDF">
+        <!-- Toolbar -->
+        <div class="edit-toolbar">
+          <div class="edit-toolbar-info">
+            <span class="edit-filename" id="editFilename">documento.pdf</span>
+            <span class="badge" id="editPageCount">0 páginas</span>
+          </div>
+          <div class="edit-toolbar-actions">
+            <button class="btn btn-ghost" id="editChangePdfBtn" type="button">
+              🔄 Cambiar PDF
+            </button>
+          </div>
+        </div>
+
+        <!-- Controls bar -->
+        <div class="edit-controls-bar">
+          <div class="edit-controls-group">
+            <button class="btn btn-ghost btn-sm" id="editSelectAllBtn" type="button" title="Seleccionar o deseleccionar todas las páginas">
+              ✓ Seleccionar todo
+            </button>
+            <button class="btn btn-ghost btn-sm" id="editInvertSelectBtn" type="button" title="Invertir selección actual">
+              🔄 Invertir selección
+            </button>
+            <button class="btn btn-ghost btn-sm btn-danger" id="editDeleteSelectedBtn" type="button" title="Eliminar páginas seleccionadas" disabled>
+              🗑️ Eliminar seleccionadas
+            </button>
+          </div>
+          <div class="edit-controls-group">
+            <button class="btn btn-ghost btn-sm" id="editInvertOrderBtn" type="button" title="Invertir el orden de las páginas">
+              ↔️ Invertir orden
+            </button>
+            <button class="btn btn-ghost btn-sm" id="editResetOrderBtn" type="button" title="Restablecer orden y páginas originales">
+              ↩️ Restablecer orden
+            </button>
+            <button class="btn btn-ghost btn-sm" id="editRotateBtn" type="button" title="Rotar 90° páginas seleccionadas (o todas si no hay selección)">
+              ↻ Rotar 90°
+            </button>
+          </div>
+        </div>
+
+        <!-- Range selection bar -->
+        <div class="edit-range-bar">
+          <label for="editRangeInput" class="edit-range-label">Rango de páginas:</label>
+          <div class="edit-range-input-group">
+            <input
+              type="text"
+              id="editRangeInput"
+              class="edit-range-input"
+              placeholder="Ej. 3-12, 22-45"
+              aria-label="Ingresar rango de páginas a seleccionar (ejemplo 3-12, 22-45)"
+              autocomplete="off"
+              spellcheck="false"
+            />
+            <button class="btn btn-primary btn-sm" id="editApplyRangeBtn" type="button">Seleccionar</button>
+          </div>
+          <span class="edit-range-hint" id="editRangeHint">Ej. 3-12, 22-45</span>
+        </div>
+
+        <!-- Grid of pages -->
+        <div class="edit-page-grid-wrapper">
+          <p class="filelist-hint">💡 Arrastra las tarjetas para reordenar páginas · Marca casillas para acciones grupales</p>
+          <div class="edit-page-grid" id="editPageGrid" role="list"></div>
+        </div>
+
+        <!-- Save bar -->
+        <div class="merge-bar">
+          <button class="btn btn-primary btn-large" id="editSaveBtn" type="button">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+              <path d="M17 21v-8H7v8M7 3v5h8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            Guardar PDF Editado
+          </button>
+        </div>
+      </section>
+
+      <!-- EDIT PROGRESS -->
+      <div class="progress-wrapper" id="editProgressWrapper" hidden aria-live="polite">
+        <div class="progress-bar-track">
+          <div class="progress-bar-fill" id="editProgressBar"></div>
+        </div>
+        <p class="progress-text" id="editProgressText">Procesando PDF…</p>
+      </div>
+
+      <!-- EDIT ERROR -->
+      <div class="error-card" id="editErrorCard" hidden role="alert" aria-live="assertive">
+        <span class="error-icon" aria-hidden="true">⚠️</span>
+        <p class="error-msg" id="editErrorMsg">Ha ocurrido un error.</p>
+        <button class="btn btn-ghost" id="editErrorRetryBtn" type="button">Cerrar</button>
+      </div>
+
+    </div><!-- /panelEdit -->
+
+    <!-- ══════════ PANEL: MD → PDF ══════════ -->
+    <div id="panelMd" role="tabpanel" aria-labelledby="tabMd" hidden>
+
+      <!-- MD DROP ZONE -->
+      <section class="dropzone-wrapper" id="mdDropzoneSection" aria-label="Zona de carga de archivo Markdown">
+        <div class="dropzone" id="mdDropzone" tabindex="0" role="button" aria-describedby="mdDropzoneHint">
+          <div class="dropzone-icon" aria-hidden="true">
+            <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M32 44V20M32 20l-8 8M32 20l8 8" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M16 48h32" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <p class="dropzone-title">Arrastra tu archivo <code class="code-tag">.md</code> aquí</p>
+          <p class="dropzone-sub" id="mdDropzoneHint">o haz clic para seleccionar · también puedes escribir directamente abajo</p>
+          <button class="btn btn-outline" id="mdBrowseBtn" type="button">Seleccionar .md</button>
+          <input type="file" id="mdFileInput" accept=".md,.markdown,text/markdown,text/plain" aria-label="Seleccionar archivo Markdown" hidden />
+        </div>
+      </section>
+
+      <!-- MD EDITOR + PREVIEW -->
+      <section class="md-editor-section" id="mdEditorSection" aria-label="Editor y vista previa Markdown">
+        <div class="md-toolbar">
+          <span class="md-toolbar-title">
+            <svg viewBox="0 0 20 20" fill="none" aria-hidden="true" class="md-icon"><path d="M3 4h14M3 8h9M3 12h11M3 16h7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+            Editor Markdown
+          </span>
+          <div class="md-toolbar-actions">
+            <span class="md-filename" id="mdFilename">sin título</span>
+            <button class="btn btn-ghost" id="mdClearBtn" type="button">Limpiar</button>
+          </div>
+        </div>
+
+        <div class="md-workspace">
+          <!-- Editor -->
+          <div class="md-pane md-pane-editor">
+            <div class="md-pane-label">Markdown</div>
+            <textarea
+              id="mdEditor"
+              class="md-textarea"
+              spellcheck="false"
+              aria-label="Editor de Markdown"
+              placeholder="# Título\n\nEscribe tu contenido en **Markdown**…"
+            ></textarea>
+          </div>
+          <!-- Preview -->
+          <div class="md-pane md-pane-preview">
+            <div class="md-pane-label">Vista previa</div>
+            <div id="mdPreview" class="md-preview" aria-live="polite"></div>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="merge-bar">
+          <button class="btn btn-primary btn-large" id="mdConvertBtn" type="button">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+              <path d="M14 2v6h6" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+              <path d="M12 18v-6M9 15l3 3 3-3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            Convertir a PDF
+          </button>
+        </div>
+      </section>
+
+      <!-- MD ERROR -->
+      <div class="error-card" id="mdErrorCard" hidden role="alert" aria-live="assertive">
+        <span class="error-icon" aria-hidden="true">⚠️</span>
+        <p class="error-msg" id="mdErrorMsg">Ha ocurrido un error.</p>
+        <button class="btn btn-ghost" id="mdErrorRetryBtn" type="button">Cerrar</button>
+      </div>
+
+    </div><!-- /panelMd -->
+
+    <!-- ══════════ PANEL: IMÁGENES → PDF ══════════ -->
+    <div id="panelImg" role="tabpanel" aria-labelledby="tabImg" hidden>
+
+      <!-- IMAGE DROP ZONE -->
+      <section class="dropzone-wrapper" id="imgDropzoneSection" aria-label="Zona de carga de imágenes PNG, JPG, JPEG">
+        <div class="dropzone" id="imgDropzone" tabindex="0" role="button" aria-describedby="imgDropzoneHint">
+          <div class="dropzone-icon" aria-hidden="true">
+            <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M32 44V20M32 20l-8 8M32 20l8 8" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M16 48h32" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <p class="dropzone-title">Arrastra tus imágenes aquí</p>
+          <p class="dropzone-sub" id="imgDropzoneHint">Admite archivos PNG, JPG y JPEG · Reordena y convierte a PDF</p>
+          <button class="btn btn-outline" id="imgBrowseBtn" type="button">Seleccionar imágenes</button>
+          <input type="file" id="imgFileInput" accept="image/png,image/jpeg,image/jpg,.png,.jpg,.jpeg" multiple aria-label="Seleccionar imágenes PNG, JPG o JPEG" hidden />
+        </div>
+      </section>
+
+      <!-- IMAGE WORKSPACE -->
+      <section class="edit-section" id="imgSection" hidden aria-label="Convertidor de imágenes a PDF">
+        <!-- Toolbar -->
+        <div class="edit-toolbar">
+          <div class="edit-toolbar-info">
+            <span class="edit-filename">Imágenes seleccionadas</span>
+            <span class="badge" id="imgCountBadge">0 imágenes</span>
+          </div>
+          <div class="edit-toolbar-actions">
+            <button class="btn btn-ghost" id="imgAddMoreBtn" type="button">+ Añadir más</button>
+            <button class="btn btn-ghost btn-danger" id="imgClearAllBtn" type="button">Eliminar todo</button>
+          </div>
+        </div>
+
+        <!-- Controls Bar: Margin options & Reorder -->
+        <div class="edit-controls-bar">
+          <div class="edit-controls-group">
+            <label class="edit-range-label" style="margin-right:.4rem;">Margen de página:</label>
+            <div class="img-margin-toggle" role="radiogroup" aria-label="Opciones de margen">
+              <button class="btn btn-sm btn-ghost img-margin-btn active" id="marginNoneBtn" type="button" role="radio" aria-checked="true">
+                Sin margen
+              </button>
+              <button class="btn btn-sm btn-ghost img-margin-btn" id="marginNormalBtn" type="button" role="radio" aria-checked="false">
+                Con margen
+              </button>
+            </div>
+          </div>
+          <div class="edit-controls-group">
+            <button class="btn btn-ghost btn-sm" id="imgInvertOrderBtn" type="button" title="Invertir el orden de las imágenes">
+              ↔️ Invertir orden
+            </button>
+            <button class="btn btn-ghost btn-sm" id="imgResetOrderBtn" type="button" title="Restablecer orden inicial">
+              ↩️ Restablecer orden
+            </button>
+          </div>
+        </div>
+
+        <!-- Grid of images -->
+        <div class="edit-page-grid-wrapper">
+          <p class="filelist-hint">💡 Arrastra las imágenes para reordenarlas en el PDF final</p>
+          <div class="edit-page-grid" id="imgGrid" role="list"></div>
+        </div>
+
+        <!-- Action bar -->
+        <div class="merge-bar">
+          <button class="btn btn-primary btn-large" id="imgConvertBtn" type="button">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+              <path d="M14 2v6h6" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+              <path d="M12 18v-6M9 15l3 3 3-3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            Convertir Imágenes a PDF
+          </button>
+        </div>
+      </section>
+
+      <!-- IMAGE PROGRESS -->
+      <div class="progress-wrapper" id="imgProgressWrapper" hidden aria-live="polite">
+        <div class="progress-bar-track">
+          <div class="progress-bar-fill" id="imgProgressBar"></div>
+        </div>
+        <p class="progress-text" id="imgProgressText">Procesando imágenes…</p>
+      </div>
+
+      <!-- IMAGE ERROR -->
+      <div class="error-card" id="imgErrorCard" hidden role="alert" aria-live="assertive">
+        <span class="error-icon" aria-hidden="true">⚠️</span>
+        <p class="error-msg" id="imgErrorMsg">Ha ocurrido un error.</p>
+        <button class="btn btn-ghost" id="imgErrorRetryBtn" type="button">Cerrar</button>
+      </div>
+
+    </div><!-- /panelImg -->
 
   </main>
 
