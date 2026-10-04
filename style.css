@@ -6,6 +6,7 @@
 /* ── Reset & base ────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 [hidden] { display: none !important; }
+button, input, select, textarea { font-family: inherit; font-size: inherit; color: inherit; }
 
 :root {
   --bg:          #0f0f13;
@@ -418,8 +419,10 @@ body {
 .tabs-nav {
   display: flex;
   justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
   gap: .5rem;
-  padding: 1rem 1rem .5rem;
+  padding: 1rem 1rem .6rem;
   background: var(--bg);
   border-bottom: 1px solid var(--border);
   position: sticky;
@@ -430,28 +433,45 @@ body {
 
 .tab-btn {
   display: inline-flex;
+  flex-direction: row;
   align-items: center;
-  gap: .45rem;
-  padding: .5rem 1.4rem;
+  justify-content: center;
+  gap: .5rem;
+  padding: .55rem 1.3rem;
   border-radius: 99px;
   font-family: inherit;
   font-size: .88rem;
   font-weight: 500;
   cursor: pointer;
   border: 1.5px solid var(--border);
-  background: transparent;
+  background: var(--surface-2);
   color: var(--text-muted);
   transition: all var(--transition);
+  white-space: nowrap;
+  appearance: none;
+  -webkit-appearance: none;
+  box-shadow: none;
 }
-.tab-btn svg { width: 16px; height: 16px; }
-.tab-btn:hover { border-color: var(--primary); color: var(--text); background: rgba(99,102,241,.07); }
+.tab-btn svg {
+  width: 18px !important;
+  height: 18px !important;
+  min-width: 18px !important;
+  min-height: 18px !important;
+  flex-shrink: 0 !important;
+  display: block;
+}
+.tab-btn:hover {
+  border-color: var(--primary);
+  color: var(--text);
+  background: rgba(99, 102, 241, .15);
+}
 .tab-btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
 
 .tab-btn.tab-active {
-  background: linear-gradient(135deg, var(--primary), var(--accent));
-  border-color: transparent;
-  color: #fff;
-  box-shadow: 0 0 18px var(--primary-glow);
+  background: linear-gradient(135deg, var(--primary), var(--accent)) !important;
+  border-color: transparent !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 18px var(--primary-glow) !important;
 }
 
 /* ── MD editor section ───────────────────────────────────── */
